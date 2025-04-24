@@ -14,7 +14,7 @@ torch.set_grad_enabled(False)
 torch.manual_seed(893)
 
 state_dict = torch.load(
-    "/home/moritz/.boltz/boltz1_conf.ckpt", map_location="cpu", mmap=True
+    "/home/yfan/.boltz/boltz1_conf.ckpt", map_location="cpu", mmap=True
 )["state_dict"]
 
 
