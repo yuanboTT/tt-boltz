@@ -65,6 +65,7 @@ class TriangleMultiplication(Module):
         self.out_g = self.torch_to_tt("g_out.weight")
 
     def __call__(self, x: ttnn.Tensor) -> ttnn.Tensor:
+        print(f'$$$YF: call TriangleMultiplication with tensor shape {x.shape}')
         x_norm_in = ttnn.layer_norm(
             x,
             weight=self.in_norm_weight,
@@ -160,6 +161,7 @@ class TriangleAttention(Module):
         self.g_weight = self.torch_to_tt("linear_g.weight")
 
     def __call__(self, x: ttnn.Tensor) -> ttnn.Tensor:
+        print(f'$$$YF: call TriangleAttention with tensor shape {x.shape}')
         x = ttnn.reshape(x, tuple(x.shape)[1:])
         if self.ending:
             x = ttnn.permute(x, (1, 0, 2))  # THIS CAUSES CACHE -> RESHAPE PROBLEM

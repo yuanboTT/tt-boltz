@@ -22,7 +22,7 @@ def median_relative_error(a, b):
     return ((a - b).abs() / b.abs()).median().item()
 
 
-@pytest.mark.parametrize("seq_len", [100, 500, 1000])
+@pytest.mark.parametrize("seq_len", [100, 128, 256, 500, 1000])
 def test_pairformer(seq_len):
     pairformer = PairformerModule(
         n_blocks=2,
@@ -42,15 +42,21 @@ def test_pairformer(seq_len):
     pairformer_torch.load_state_dict(pairformer_state_dict, strict=False)
     s = 8 * torch.randn(1, seq_len, 384)
     z = 26 * torch.randn(1, seq_len, seq_len, 128)
+    torch.save(s, f'pairformer_s_input{seq_len}.pt')
+    torch.save(z, f'pairformer_z_input{seq_len}.pt')
     mask = torch.ones(1, seq_len)
     pair_mask = mask[:, :, None] * mask[:, None, :]
     s_tt, z_tt = pairformer(s, z, mask, pair_mask)
     s_torch, z_torch = pairformer_torch(s, z, mask, pair_mask)
+    torch.save(s_tt, f'pairformer_s_sl{seq_len}_tt.pt')
+    torch.save(z_tt, f'pairformer_z_sl{seq_len}_tt.pt')
+    torch.save(s_torch, f'pairformer_s_sl{seq_len}_torch.pt')
+    torch.save(z_torch, f'pairformer_z_sl{seq_len}_torch.pt')
     assert median_relative_error(s_tt, s_torch) < 1e-1, "s not accurate"
     assert median_relative_error(z_tt, z_torch) < 1e-1, "z not accurate"
 
 
-@pytest.mark.parametrize("seq_len", [100, 500, 1000])
+@pytest.mark.parametrize("seq_len", [100, 128, 256, 500, 1000])
 def test_token_transformer(seq_len):
     token_transformer = DiffusionTransformerModule(
         n_layers=2,
@@ -71,6 +77,9 @@ def test_token_transformer(seq_len):
     a = 3 + 5 * torch.randn(1, seq_len, 768)
     s = -2 + 42 * torch.randn(1, seq_len, 768)
     z = 10 * torch.randn(1, seq_len, seq_len, 128)
+    torch.save(a, f'token_transformer_a_input{seq_len}.pt')
+    torch.save(s, f'token_transformer_s_input{seq_len}.pt')
+    torch.save(z, f'token_transformer_z_input{seq_len}.pt')
     mask = torch.ones(1, seq_len)
     a_tt = token_transformer(
         a,
@@ -84,6 +93,8 @@ def test_token_transformer(seq_len):
         z,
         mask,
     )
+    torch.save(a_tt,    f'token_transformer_a_sl{seq_len}_tt.pt')
+    torch.save(a_torch, f'token_transformer_a_sl{seq_len}_torch.pt')
     assert median_relative_error(a_tt, a_torch) < 1e-1, "a not accurate"
 
 @pytest.mark.parametrize("seq_len", [100, 500, 1000])
