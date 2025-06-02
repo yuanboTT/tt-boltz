@@ -22,6 +22,8 @@ from boltz.data.types import MSA, Manifest, Record
 from boltz.data.write.writer import BoltzWriter
 from boltz.model.model import Boltz1
 
+import time
+
 CCD_URL = "https://huggingface.co/boltz-community/boltz-1/resolve/main/ccd.pkl"
 MODEL_URL = (
     "https://huggingface.co/boltz-community/boltz-1/resolve/main/boltz1_conf.ckpt"
@@ -658,6 +660,8 @@ def predict(
     }
     diffusion_params = BoltzDiffusionParams()
     diffusion_params.step_scale = step_scale
+
+    start = time.time()
     model_module: Boltz1 = Boltz1.load_from_checkpoint(
         checkpoint,
         strict=True,
@@ -667,7 +671,13 @@ def predict(
         ema=False,
         use_tenstorrent = use_tenstorrent
     )
+    end = time.time()
+    print(f'$$$YF: load_from_checkpoint time: {end - start:.4f} seconds')
+
+    start = time.time()
     model_module.eval()
+    end = time.time()
+    print(f'$$$YF: eval time: {end - start:.4f} seconds')
 
     # Create prediction writer
     pred_writer = BoltzWriter(
@@ -685,12 +695,15 @@ def predict(
         precision=32,
     )
 
+    start = time.time()
     # Compute predictions
     trainer.predict(
         model_module,
         datamodule=data_module,
         return_predictions=False,
     )
+    end = time.time()
+    print(f'$$$YF: trainer predict time: {end - start:.4f} seconds')
 
 
 if __name__ == "__main__":

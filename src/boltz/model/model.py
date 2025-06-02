@@ -38,6 +38,8 @@ from boltz.model.optim.scheduler import AlphaFoldLRScheduler
 
 from boltz.model.modules import tenstorrent
 
+import time
+
 class Boltz1(LightningModule):
     def __init__(  # noqa: PLR0915, C901, PLR0912
         self,
@@ -278,6 +280,7 @@ class Boltz1(LightningModule):
         diffusion_samples: int = 1,
         run_confidence_sequentially: bool = False,
     ) -> dict[str, Tensor]:
+        print(f'$$$YF: Boltz1 forward ...')
         dict_out = {}
 
         # Compute input embeddings
@@ -328,13 +331,17 @@ class Boltz1(LightningModule):
                     else:
                         pairformer_module = self.pairformer_module
 
+                    start = time.time()
                     s, z = pairformer_module(s, z, mask=mask, pair_mask=pair_mask)
+                    end = time.time()
+                    print(f'$$$YF: recycling step {i}, pairformer_module time {end - start:.4f} seconds')
 
             pdistogram = self.distogram_module(z)
             dict_out = {"pdistogram": pdistogram}
 
         # Compute structure module
         if self.training and self.structure_prediction_training:
+            print('$$$YF: training and structure_prediction_training')
             dict_out.update(
                 self.structure_module(
                     s_trunk=s,
@@ -347,6 +354,7 @@ class Boltz1(LightningModule):
             )
 
         if (not self.training) or self.confidence_prediction:
+            print('$$$YF: not training or confidence_prediction')
             dict_out.update(
                 self.structure_module.sample(
                     s_trunk=s,
@@ -362,6 +370,7 @@ class Boltz1(LightningModule):
             )
 
         if self.confidence_prediction:
+            print('$$$YF: confidence_prediction')
             dict_out.update(
                 self.confidence_module(
                     s_inputs=s_inputs.detach(),
@@ -380,6 +389,7 @@ class Boltz1(LightningModule):
                 )
             )
         if self.confidence_prediction and self.confidence_module.use_s_diffusion:
+            print('$$$YF: confidence_prediction and confidence_module.use_s_diffusion')
             dict_out.pop("diff_token_repr", None)
         return dict_out
 
@@ -1135,6 +1145,7 @@ class Boltz1(LightningModule):
         self.best_rmsd.reset()
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        print(f'$$$YF: Boltz1 predict_step batch_idx={batch_idx}...')
         try:
             out = self(
                 batch,
