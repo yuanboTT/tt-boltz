@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from math import sqrt
 import random
+import time
 
 from einops import rearrange
 import torch
@@ -213,6 +214,7 @@ class DiffusionModule(Module):
         a = a + self.s_to_a_linear(s)
 
         mask = feats["token_pad_mask"].repeat_interleave(multiplicity, 0)
+        start = time.time()
         a = self.token_transformer(
             a,
             mask=mask.float(),
@@ -221,6 +223,8 @@ class DiffusionModule(Module):
             multiplicity=multiplicity,
             model_cache=model_cache,
         )
+        end = time.time()
+        print(f'$$$YF: token_transformer time {end - start:.4f} seconds')
         a = self.a_norm(a)
 
         # Broadcast token activations to atoms and run Sequence-local Atom Attention

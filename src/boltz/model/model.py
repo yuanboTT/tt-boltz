@@ -280,7 +280,7 @@ class Boltz1(LightningModule):
         diffusion_samples: int = 1,
         run_confidence_sequentially: bool = False,
     ) -> dict[str, Tensor]:
-        print(f'$$$YF: Boltz1 forward ...')
+        #print(f'$$$YF: Boltz1 forward ...')
         dict_out = {}
 
         # Compute input embeddings
@@ -323,7 +323,11 @@ class Boltz1(LightningModule):
 
                     # Compute pairwise stack
                     if not self.no_msa:
+                        start = time.time()
                         z = z + self.msa_module(z, s_inputs, feats)
+                        end = time.time()
+                        print(f'$$$YF: recycling step {i}, msa_module time {end - start:.4f} seconds')
+
 
                     # Revert to uncompiled version for validation
                     if self.is_pairformer_compiled and not self.training:
@@ -341,7 +345,7 @@ class Boltz1(LightningModule):
 
         # Compute structure module
         if self.training and self.structure_prediction_training:
-            print('$$$YF: training and structure_prediction_training')
+            #start = time.time()
             dict_out.update(
                 self.structure_module(
                     s_trunk=s,
@@ -352,9 +356,11 @@ class Boltz1(LightningModule):
                     multiplicity=multiplicity_diffusion_train,
                 )
             )
+            #end = time.time()
+            #print(f'$$$YF: training and structure_prediction_training time {end - start:.4f} seconds')
 
         if (not self.training) or self.confidence_prediction:
-            print('$$$YF: not training or confidence_prediction')
+            #start = time.time()
             dict_out.update(
                 self.structure_module.sample(
                     s_trunk=s,
@@ -368,9 +374,11 @@ class Boltz1(LightningModule):
                     train_accumulate_token_repr=self.training,
                 )
             )
+            #end = time.time()
+            #print(f'$$$YF: not training or confidence_prediction time {end - start:.4f} seconds')
 
         if self.confidence_prediction:
-            print('$$$YF: confidence_prediction')
+            #print('$$$YF: confidence_prediction')
             dict_out.update(
                 self.confidence_module(
                     s_inputs=s_inputs.detach(),
@@ -389,7 +397,7 @@ class Boltz1(LightningModule):
                 )
             )
         if self.confidence_prediction and self.confidence_module.use_s_diffusion:
-            print('$$$YF: confidence_prediction and confidence_module.use_s_diffusion')
+            #print('$$$YF: confidence_prediction and confidence_module.use_s_diffusion')
             dict_out.pop("diff_token_repr", None)
         return dict_out
 
@@ -469,12 +477,15 @@ class Boltz1(LightningModule):
                 batch,
             )
             try:
+                start = time.time()
                 diffusion_loss_dict = self.structure_module.compute_loss(
                     batch,
                     out,
                     multiplicity=self.training_args.diffusion_multiplicity,
                     **self.diffusion_loss_args,
                 )
+                end = time.time()
+                print(f'$$$YF: diffusion_loss_dict time {end - start:.4f} seconds')
             except Exception as e:
                 print(f"Skipping batch {batch_idx} due to error: {e}")
                 return None
@@ -1145,7 +1156,7 @@ class Boltz1(LightningModule):
         self.best_rmsd.reset()
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        print(f'$$$YF: Boltz1 predict_step batch_idx={batch_idx}...')
+        #print(f'$$$YF: Boltz1 predict_step batch_idx={batch_idx}...')
         try:
             out = self(
                 batch,

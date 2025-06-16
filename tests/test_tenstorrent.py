@@ -22,7 +22,7 @@ def median_relative_error(a, b):
     return ((a - b).abs() / b.abs()).median().item()
 
 
-@pytest.mark.parametrize("seq_len", [100, 128, 256, 500, 1000])
+@pytest.mark.parametrize("seq_len", [100, 128, 256, 512, 686, 704, 1024])
 def test_pairformer(seq_len):
     pairformer = PairformerModule(
         n_blocks=2,
@@ -56,7 +56,7 @@ def test_pairformer(seq_len):
     assert median_relative_error(z_tt, z_torch) < 1e-1, "z not accurate"
 
 
-@pytest.mark.parametrize("seq_len", [100, 128, 256, 500, 1000])
+@pytest.mark.parametrize("seq_len", [100, 128, 256, 512, 686, 704, 1024])
 def test_token_transformer(seq_len):
     token_transformer = DiffusionTransformerModule(
         n_layers=2,
